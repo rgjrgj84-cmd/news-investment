@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>뉴스 탐험대 📰 - 초등 모의투자 교육 프로그램</title>
+<style>
+  :root {
+    --mint: #4CAF93; --mint-light: #E8F5F0;
+    --peach: #FF8C69; --peach-light: #FFF0EB;
+    --sky: #5BA3D9; --sky-light: #EBF4FC;
+    --lemon: #F5C842; --lemon-light: #FFFBE8;
+    --lavender: #9B7FD4; --lavender-light: #F3EFFE;
+    --card-bg: #ffffff; --surface: #f7f7f5;
+    --text-primary: #1a1a1a; --text-secondary: #666;
+    --text-tertiary: #999; --border: rgba(0,0,0,0.12);
+    --radius-md: 8px; --radius-lg: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; background: #f0eff4; min-height: 100vh; }
+  #app { max-width: 480px; margin: 0 auto; background: #f0eff4; min-height: 100vh; }
+
+  .header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px 24px 16px; color: white; position: relative; overflow: hidden;
+  }
+  .header::before {
+    content: '🚀 ⭐ 📰 💰 🌟'; position: absolute;
+    top: 4px; right: 16px; font-size: 18px; letter-spacing: 6px; opacity: 0.3;
+  }
+  .header-title { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
+  .header-sub { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+  .header-money { margin-top: 14px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .money-badge {
+    background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px; padding: 6px 14px; font-size: 14px; font-weight: 500;
+  }
+  .money-badge span { font-size: 16px; font-weight: 600; }
+  .phase-badge {
+    background: rgba(255,200,50,0.3); border: 1px solid rgba(255,200,50,0.5);
+    border-radius: 20px; padding: 6px 14px; font-size: 12px;
+  }
+
+  .nav {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--card-bg); overflow-x: auto; position: sticky; top: 0; z-index: 10;
+  }
+  .nav-btn {
+    flex: 1; min-width: 80px; padding: 12px 8px; font-size: 13px;
+    border: none; background: none; color: var(--text-secondary);
+    cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: color 0.15s;
+  }
+  .nav-btn.active { color: #764ba2; border-bottom-color: #764ba2; font-weight: 600; }
+
+  .content { padding: 16px; }
+
+  .card {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 16px; margin-bottom: 12px;
+  }
+  .card-title {
+    font-size: 14px; font-weight: 600; color: var(--text-secondary);
+    margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+  }
+
+  .news-item {
+    border: 1px solid var(--border); border-radius: var(--radius-md);
+    padding: 12px; margin-bottom: 8px; background: var(--card-bg);
+  }
+  .news-item.selected { border-color: #764ba2; background: var(--lavender-light); }
+  .news-headline { font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--text-primary); }
+  .news-meta { display: flex; gap: 8px; margin-top: 6px; align-items: center; flex-wrap: wrap; }
+  .news-company { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: var(--sky-light); color: #185FA5; font-weight: 600; }
+  .news-date { font-size: 11px; color: var(--text-tertiary); }
+  .news-link { font-size: 11px; color: #764ba2; text-decoration: none; padding: 2px 8px; border: 1px solid #9B7FD4; border-radius: 10px; }
+  .news-link:hover { background: var(--lavender-light); }
+  .news-summary { font-size: 12px; color: var(--text-secondary); margin-top: 6px; line-height: 1.5; padding: 8px; background: var(--surface); border-radius: 6px; }
+  .news-trust { display: flex; gap: 6px; margin-top: 8px; align-items: center; }
+  .trust-label { font-size: 11px; color: var(--text-tertiary); }
+  .trust-btn {
+    font-size: 11px; padding: 3px 10px; border: 1px solid var(--border);
+    border-radius: 10px; background: none; cursor: pointer; color: var(--text-secondary); transition: all 0.1s;
+  }
+  .trust-btn.voted-yes { background: var(--mint-light); border-color: var(--mint); color: #085041; }
+  .trust-btn.voted-no { background: var(--peach-light); border-color: var(--peach); color: #993C1D; }
+
+  .signal-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+  .signal-up { background: var(--mint-light); color: #085041; }
+  .signal-down { background: var(--peach-light); color: #993C1D; }
+
+  .stock-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+  .stock-card {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: 12px; cursor: pointer; transition: all 0.15s;
+  }
+  .stock-card:hover { border-color: #9B7FD4; }
+  .stock-card.selected { border-color: #764ba2; border-width: 2px; background: var(--lavender-light); }
+  .stock-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+  .stock-price { font-size: 16px; font-weight: 600; margin-top: 4px; color: var(--text-primary); }
+  .stock-change { font-size: 11px; margin-top: 2px; }
+  .change-up { color: #0F6E56; } .change-down { color: #993C1D; }
+
+  .invest-panel {
+    background: var(--lavender-light); border: 1px solid #9B7FD4;
+    border-radius: var(--radius-lg); padding: 16px; margin-bottom: 12px;
+  }
+  .invest-panel h3 { font-size: 14px; font-weight: 600; color: #3C3489; margin-bottom: 12px; }
+  .qty-control { display: flex; align-items: center; gap: 12px; margin: 8px 0; }
+  .qty-btn {
+    width: 32px; height: 32px; border: 1px solid #9B7FD4; border-radius: 50%;
+    background: var(--card-bg); font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; color: #764ba2; transition: background 0.1s;
+  }
+  .qty-btn:hover { background: #9B7FD4; color: white; }
+  .qty-num { font-size: 20px; font-weight: 600; min-width: 32px; text-align: center; color: var(--text-primary); }
+  .total-cost { font-size: 13px; color: var(--text-secondary); }
+  .total-cost span { font-weight: 600; color: var(--text-primary); }
+  .reason-input {
+    width: 100%; border: 1px solid #9B7FD4; border-radius: 8px; padding: 8px 10px;
+    font-size: 13px; background: var(--card-bg); color: var(--text-primary); resize: none;
+    font-family: inherit; margin: 8px 0;
+  }
+  .reason-input:focus { outline: none; border-color: #764ba2; }
+  .buy-btn {
+    width: 100%; padding: 12px; background: #764ba2; color: white;
+    border: none; border-radius: var(--radius-md); font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: opacity 0.15s; margin-top: 8px;
+  }
+  .buy-btn:hover { opacity: 0.9; }
+  .buy-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .stat-box { background: var(--surface); border-radius: var(--radius-md); padding: 12px 10px; text-align: center; }
+  .stat-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+  .stat-value { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+
+  .portfolio-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+  }
+  .portfolio-item:last-child { border-bottom: none; }
+  .port-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+  .port-detail { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .port-value { font-size: 15px; font-weight: 600; }
+  .port-pct { font-size: 12px; margin-top: 2px; }
+  .profit { color: #0F6E56; } .loss { color: #993C1D; }
+
+  .timemachine-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .time-btn {
+    padding: 8px 14px; border: 1px solid var(--border); border-radius: 20px;
+    background: var(--card-bg); font-size: 13px; cursor: pointer; color: var(--text-secondary); transition: all 0.15s;
+  }
+  .time-btn:hover { border-color: #764ba2; color: #764ba2; }
+  .time-btn.active { background: #764ba2; color: white; border-color: #764ba2; }
+
+  .result-reveal {
+    background: var(--mint-light); border: 1px solid var(--mint);
+    border-radius: var(--radius-lg); padding: 16px; margin-bottom: 12px; text-align: center;
+  }
+  .result-title { font-size: 13px; color: #085041; margin-bottom: 8px; }
+  .result-num { font-size: 28px; font-weight: 700; color: #085041; }
+  .result-sub { font-size: 12px; color: #0F6E56; margin-top: 4px; }
+  .result-loss { background: var(--peach-light); border-color: var(--peach); }
+  .result-loss .result-title { color: #993C1D; }
+  .result-loss .result-num { color: #993C1D; }
+  .result-loss .result-sub { color: #D85A30; }
+
+  .diary-item { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px; margin-bottom: 8px; background: var(--card-bg); }
+  .diary-date { font-size: 11px; color: var(--text-tertiary); margin-bottom: 6px; }
+  .diary-text { font-size: 13px; color: var(--text-primary); line-height: 1.5; }
+  .diary-tag { display: inline-block; margin-top: 6px; font-size: 11px; padding: 2px 8px; border-radius: 10px; background: var(--sky-light); color: #185FA5; }
+
+  .week-schedule { display: flex; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; margin-bottom: 16px; }
+  .week-day { flex: 1; padding: 10px 6px; text-align: center; font-size: 12px; }
+  .week-day-name { font-weight: 600; color: var(--text-primary); }
+  .week-day-status { font-size: 10px; color: var(--text-tertiary); margin-top: 3px; }
+  .week-day.buy-period { background: var(--mint-light); }
+  .week-day.buy-period .week-day-name { color: #085041; }
+  .week-day.buy-period .week-day-status { color: #0F6E56; }
+  .week-day.watch-period { background: var(--lemon-light); }
+  .week-day.watch-period .week-day-name { color: #633806; }
+  .week-day.result-period { background: var(--lavender-light); }
+  .week-day.result-period .week-day-name { color: #3C3489; }
+
+  .filter-row { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+  .filter-chip {
+    padding: 5px 12px; border: 1px solid var(--border); border-radius: 20px;
+    background: var(--card-bg); font-size: 12px; cursor: pointer; color: var(--text-secondary); transition: all 0.1s;
+  }
+  .filter-chip:hover { border-color: #764ba2; color: #764ba2; }
+  .filter-chip.active { background: #764ba2; color: white; border-color: #764ba2; }
+
+  .ai-summary-box { border: 1px solid #9B7FD4; border-radius: var(--radius-md); padding: 12px; margin-top: 8px; background: var(--lavender-light); }
+  .ai-summary-label { font-size: 11px; color: #534AB7; font-weight: 600; margin-bottom: 6px; }
+  .ai-summary-text { font-size: 13px; color: var(--text-primary); line-height: 1.6; }
+
+  .ai-loading { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--lavender-light); border-radius: 8px; font-size: 12px; color: #534AB7; margin-top: 8px; }
+  .ai-dot { width: 6px; height: 6px; border-radius: 50%; background: #9B7FD4; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+  .ai-dot:nth-child(2) { animation-delay: 0.2s; }
+  .ai-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: #333; color: white; padding: 10px 20px; border-radius: 20px;
+    font-size: 14px; z-index: 999; opacity: 0; transition: opacity 0.3s;
+    pointer-events: none; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+
+  .section-tip {
+    text-align: center; padding: 14px 16px; background: var(--lemon-light);
+    border-radius: var(--radius-md); font-size: 13px; color: #854F0B; margin-bottom: 12px;
+  }
+
+  /* API Key Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-box {
+    background: var(--card-bg); border-radius: var(--radius-lg); padding: 24px;
+    width: 100%; max-width: 400px;
+  }
+  .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--text-primary); }
+  .modal-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px; }
+  .modal-input {
+    width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
+    font-size: 14px; color: var(--text-primary); background: var(--surface); font-family: inherit;
+  }
+  .modal-input:focus { outline: none; border-color: #764ba2; }
+  .modal-btn {
+    width: 100%; margin-top: 12px; padding: 12px; background: #764ba2; color: white;
+    border: none; border-radius: var(--radius-md); font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  .modal-btn:hover { opacity: 0.9; }
+  .modal-skip { width: 100%; margin-top: 8px; padding: 10px; background: none; color: var(--text-secondary); border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div class="header-title">뉴스 탐험대 📰</div>
+    <div class="header-sub">실시간 경제 뉴스로 배우는 스마트 투자</div>
+    <div class="header-money">
+      <div class="money-badge">💰 가상 머니: <span id="wallet">1,000,000</span>원</div>
+      <div class="phase-badge">📅 투자 기간 (월~수)</div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn active" onclick="showTab('news')">📰 뉴스</button>
+    <button class="nav-btn" onclick="showTab('invest')">💹 투자</button>
+    <button class="nav-btn" onclick="showTab('portfolio')">🗂️ 내 투자</button>
+    <button class="nav-btn" onclick="showTab('timemachine')">⏰ 타임머신</button>
+    <button class="nav-btn" onclick="showTab('diary')">📓 일지</button>
+  </div>
+
+  <div class="content" id="content"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STOCK_DB = [
+  { id: 'samsung',     name: '삼성전자',         price: 73400,  change: +1.2, emoji: '📱', sector: '반도체/IT' },
+  { id: 'kakao',       name: '카카오',           price: 42800,  change: -0.8, emoji: '💬', sector: 'IT/플랫폼' },
+  { id: 'naver',       name: '네이버',           price: 186500, change: +2.1, emoji: '🔍', sector: 'IT/플랫폼' },
+  { id: 'hyundai',     name: '현대차',           price: 215000, change: -1.5, emoji: '🚗', sector: '자동차' },
+  { id: 'lg',          name: 'LG전자',           price: 98500,  change: +0.5, emoji: '📺', sector: '전자' },
+  { id: 'sk',          name: 'SK하이닉스',       price: 198000, change: +3.1, emoji: '💾', sector: '반도체' },
+  { id: 'posco',       name: 'POSCO홀딩스',      price: 312000, change: -0.4, emoji: '🏭', sector: '철강' },
+  { id: 'celltrion',   name: '셀트리온',         price: 178500, change: +1.8, emoji: '💊', sector: '바이오' },
+  { id: 'lotte',       name: '롯데쇼핑',         price: 68200,  change: -1.1, emoji: '🛍️', sector: '유통' },
+  { id: 'coupang',     name: '쿠팡',             price: 24800,  change: +2.4, emoji: '📦', sector: '이커머스' },
+  { id: 'krafton',     name: '크래프톤',         price: 312000, change: +0.9, emoji: '🎮', sector: '게임' },
+  { id: 'netmarble',   name: '넷마블',           price: 52300,  change: -0.6, emoji: '🕹️', sector: '게임' },
+  { id: 'hana',        name: '하나금융',         price: 68900,  change: +0.3, emoji: '🏦', sector: '금융' },
+  { id: 'kb',          name: 'KB금융',           price: 91200,  change: +0.7, emoji: '🏦', sector: '금융' },
+  { id: 'amorepacific',name: '아모레퍼시픽',     price: 94500,  change: +1.5, emoji: '💄', sector: '화장품' },
+  { id: 'lg_chem',     name: 'LG화학',           price: 298000, change: -2.1, emoji: '🔬', sector: '화학' },
+  { id: 'hanwha',      name: '한화에어로스페이스',price: 385000, change: +4.2, emoji: '🚀', sector: '방산/우주' },
+  { id: 'kakaogames',  name: '카카오게임즈',     price: 18900,  change: -1.3, emoji: '🎯', sector: '게임' },
+];
+
+let STOCKS = JSON.parse(localStorage.getItem('my_stocks') || 'null') ||
+  STOCK_DB.filter(s => ['samsung','kakao','naver','hyundai'].includes(s.id));
+
+function saveMyStocks() { localStorage.setItem('my_stocks', JSON.stringify(STOCKS)); }
+
+const PAST_EVENTS = [
+  { period: '2024년 1월', label: '삼성 갤럭시 S24 시리즈 발표', news: '삼성전자가 새로운 갤럭시 S24 시리즈를 공개했습니다. AI 기능이 탑재된 최신 스마트폰으로 전세계 관심이 집중됐어요!', company: '삼성전자', stockId: 'samsung', buyPrice: 68000, resultPrice: 75400, signal: 'up', url: 'https://news.naver.com' },
+  { period: '2024년 3월', label: '카카오 AI 비서 서비스 출시', news: '카카오가 인공지능 비서 서비스를 선보였습니다. 카카오톡과 연동되어 일상에서 쉽게 사용할 수 있다고 해요.', company: '카카오', stockId: 'kakao', buyPrice: 48000, resultPrice: 44200, signal: 'down', url: 'https://news.naver.com' },
+  { period: '2024년 6월', label: '현대차 전기차 판매량 급증', news: '현대자동차의 아이오닉 시리즈가 유럽에서 큰 인기를 끌고 있습니다. 친환경 차량에 대한 관심이 높아지고 있어요!', company: '현대차', stockId: 'hyundai', buyPrice: 195000, resultPrice: 228000, signal: 'up', url: 'https://news.naver.com' },
+  { period: '2024년 9월', label: '네이버 동남아 시장 진출 발표', news: '네이버가 일본과 동남아시아 시장에서 새로운 서비스를 시작한다고 발표했습니다. 글로벌 기업으로 성장하고 있어요!', company: '네이버', stockId: 'naver', buyPrice: 178000, resultPrice: 195000, signal: 'up', url: 'https://news.naver.com' },
+];
+
+const SAMPLE_NEWS = [
+  { id: 'n1', headline: '삼성전자, 차세대 AI 반도체 양산 성공... 글로벌 시장 선점 기대', company: '삼성전자', stockId: 'samsung', date: '2025.04.03', signal: 'up',   url: 'https://news.naver.com', aiSummary: null, trusted: null },
+  { id: 'n2', headline: '카카오, 카카오페이 수수료 인하 발표... 경쟁 심화로 수익성 우려', company: '카카오',   stockId: 'kakao',   date: '2025.04.03', signal: 'down', url: 'https://news.naver.com', aiSummary: null, trusted: null },
+  { id: 'n3', headline: '현대차, 북미 전기차 시장 점유율 2위 등극... 아이오닉9 예약 폭주', company: '현대차',   stockId: 'hyundai', date: '2025.04.03', signal: 'up',   url: 'https://news.naver.com', aiSummary: null, trusted: null },
+  { id: 'n4', headline: '네이버, 라인야후 지분 매각 협상 결렬... 향후 전략 불확실',        company: '네이버',   stockId: 'naver',   date: '2025.04.02', signal: 'down', url: 'https://news.naver.com', aiSummary: null, trusted: null },
+];
+
+let apiKey = localStorage.getItem('anthropic_key') || '';
+let state = {
+  tab: 'news', wallet: 1000000, portfolio: [], diary: [],
+  selectedStock: null, qty: 1, reason: '',
+  selectedPast: null, pastBought: false, pastResult: null,
+  filterCompany: 'all', loadingAI: {}, showKeyModal: !apiKey,
+  stockSearch: '', showSearchPanel: false,
+};
+
+function fmt(n) { return Math.round(n).toLocaleString('ko-KR'); }
+function fmtPct(n) { return (n > 0 ? '+' : '') + n.toFixed(1) + '%'; }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function showTab(tab) {
+  state.tab = tab;
+  document.querySelectorAll('.nav-btn').forEach((b, i) => {
+    b.classList.toggle('active', ['news','invest','portfolio','timemachine','diary'][i] === tab);
+  });
+  render();
+}
+
+function saveKey() {
+  const k = document.getElementById('keyInput').value.trim();
+  if (!k.startsWith('sk-ant-')) { showToast('올바른 API 키를 입력해주세요'); return; }
+  apiKey = k;
+  localStorage.setItem('anthropic_key', k);
+  state.showKeyModal = false;
+  const m = document.getElementById('keyModal');
+  if (m) m.remove();
+}
+
+function skipKey() {
+  state.showKeyModal = false;
+  const m = document.getElementById('keyModal');
+  if (m) m.remove();
+}
+
+async function getAISummary(newsId) {
+  const news = SAMPLE_NEWS.find(n => n.id === newsId);
+  if (!news || news.aiSummary || state.loadingAI[newsId]) return;
+  if (!apiKey) { showToast('⚙️ AI 기능을 쓰려면 API 키를 설정해주세요'); state.showKeyModal = true; render(); return; }
+  state.loadingAI[newsId] = true;
+  render();
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514', max_tokens: 300,
+        messages: [{ role: 'user', content: `다음 주식 뉴스를 초등학교 5학년이 이해할 수 있도록 2~3문장으로 쉽게 설명해줘. 어려운 경제 용어는 쉬운 말로 바꿔줘. 마지막에 "이 뉴스는 주가에 좋은 소식일까요, 나쁜 소식일까요?" 라고 물어봐줘.\n\n뉴스: ${news.headline}` }]
+      })
+    });
+    const data = await resp.json();
+    news.aiSummary = data.content?.[0]?.text || '요약을 불러올 수 없어요.';
+  } catch(e) {
+    news.aiSummary = '🤖 AI 선생님이 잠시 바빠요. 직접 기사를 읽어볼까요?';
+  }
+  state.loadingAI[newsId] = false;
+  render();
+}
+
+function trustVote(newsId, vote) {
+  const news = SAMPLE_NEWS.find(n => n.id === newsId);
+  if (news) { news.trusted = vote; render(); }
+}
+
+function buyStock() {
+  if (!state.selectedStock) return;
+  const s = STOCKS.find(x => x.id === state.selectedStock);
+  const cost = s.price * state.qty;
+  if (cost > state.wallet) { showToast('💸 가상 머니가 부족해요!'); return; }
+  if (!state.reason.trim()) { showToast('✏️ 왜 이 주식을 샀는지 적어줘요!'); return; }
+  state.wallet -= cost;
+  const existing = state.portfolio.find(p => p.stockId === state.selectedStock);
+  if (existing) {
+    const newQty = existing.qty + state.qty;
+    existing.avgPrice = ((existing.avgPrice * existing.qty) + s.price * state.qty) / newQty;
+    existing.qty = newQty;
+  } else {
+    state.portfolio.push({ stockId: state.selectedStock, name: s.name, emoji: s.emoji, qty: state.qty, avgPrice: s.price, currentPrice: s.price });
+  }
+  state.diary.unshift({ date: new Date().toLocaleDateString('ko-KR'), text: `[${s.name}] ${state.qty}주 구매 (${fmt(s.price)}원/주)\n이유: ${state.reason}`, tag: s.name });
+  showToast(`🎉 ${s.name} ${state.qty}주 구매 완료!`);
+  state.qty = 1; state.reason = ''; state.selectedStock = null;
+  render();
+}
+
+function selectPastEvent(idx) {
+  state.selectedPast = idx; state.pastBought = false; state.pastResult = null; render();
+}
+
+function pastBuy() {
+  const ev = PAST_EVENTS[state.selectedPast];
+  if (!ev) return;
+  if (state.wallet < ev.buyPrice) { showToast('💸 가상 머니가 부족해요!'); return; }
+  state.wallet -= ev.buyPrice; state.pastBought = true; render();
+  showToast(`📅 ${ev.period}으로 이동! ${ev.company} 1주 구매`);
+}
+
+function pastReveal() {
+  const ev = PAST_EVENTS[state.selectedPast];
+  if (!ev || !state.pastBought) return;
+  const profit = ev.resultPrice - ev.buyPrice;
+  const pct = (profit / ev.buyPrice * 100).toFixed(1);
+  state.wallet += ev.resultPrice;
+  state.pastResult = { profit, pct, ev };
+  state.diary.unshift({ date: new Date().toLocaleDateString('ko-KR'), text: `[타임머신] ${ev.company} 투자 결과: ${profit > 0 ? '+' : ''}${fmt(profit)}원 (${profit > 0 ? '+' : ''}${pct}%)`, tag: '타임머신' });
+  render();
+}
+
+function renderKeyModal() {
+  return `<div id="keyModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#fff;border-radius:12px;padding:24px;width:100%;max-width:400px;">
+      <div style="font-size:16px;font-weight:700;margin-bottom:8px;color:#1a1a1a;">🤖 AI 선생님 설정</div>
+      <div style="font-size:13px;color:#666;line-height:1.6;margin-bottom:16px;">
+        뉴스를 초등학생 눈높이로 쉽게 설명해주는 AI 기능을 사용하려면 Anthropic API 키가 필요해요.<br><br>
+        <strong>API 키 발급:</strong> <a href="https://console.anthropic.com" target="_blank" style="color:#764ba2">console.anthropic.com</a> → API Keys
+      </div>
+      <input id="keyInput" type="password" placeholder="sk-ant-..." value="${apiKey}"
+        style="width:100%;border:1px solid #ddd;border-radius:8px;padding:10px 12px;font-size:14px;color:#1a1a1a;background:#f7f7f5;font-family:inherit;display:block;margin-bottom:10px;">
+      <button onclick="saveKey()"
+        style="width:100%;padding:12px;background:#764ba2;color:white;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;display:block;margin-bottom:8px;">
+        ✅ 저장하고 시작하기
+      </button>
+      <button onclick="skipKey()"
+        style="width:100%;padding:10px;background:none;color:#666;border:1px solid #ddd;border-radius:8px;font-size:13px;cursor:pointer;display:block;">
+        나중에 설정할게요 (AI 기능 없이 사용)
+      </button>
+    </div>
+  </div>`;
+}
+
+function renderNews() {
+  const companies = ['all', '삼성전자', '카카오', '현대차', '네이버'];
+  const filtered = state.filterCompany === 'all' ? SAMPLE_NEWS : SAMPLE_NEWS.filter(n => n.company === state.filterCompany);
+  return `
+<div class="week-schedule">
+  <div class="week-day buy-period"><div class="week-day-name">월</div><div class="week-day-status">투자</div></div>
+  <div class="week-day buy-period"><div class="week-day-name">화</div><div class="week-day-status">투자</div></div>
+  <div class="week-day buy-period"><div class="week-day-name">수</div><div class="week-day-status">투자</div></div>
+  <div class="week-day watch-period"><div class="week-day-name">목</div><div class="week-day-status">관찰</div></div>
+  <div class="week-day watch-period"><div class="week-day-name">금</div><div class="week-day-status">관찰</div></div>
+  <div class="week-day result-period"><div class="week-day-name">다음 월</div><div class="week-day-status">결산</div></div>
+</div>
+<div class="filter-row">
+  ${companies.map(c => `<button class="filter-chip ${state.filterCompany === c ? 'active' : ''}" onclick="setFilter('${c}')">${c === 'all' ? '전체' : c}</button>`).join('')}
+</div>
+<div class="card-title">📰 오늘의 경제 뉴스</div>
+${filtered.map(n => `
+<div class="news-item">
+  <div class="news-headline">${n.headline}</div>
+  <div class="news-meta">
+    <span class="news-company">${n.company}</span>
+    <span class="news-date">${n.date}</span>
+    <span class="signal-badge ${n.signal === 'up' ? 'signal-up' : 'signal-down'}">${n.signal === 'up' ? '📈 호재' : '📉 악재'}</span>
+    <a href="${n.url}" target="_blank" class="news-link">원문 읽기 ↗</a>
+  </div>
+  ${state.loadingAI[n.id] ? `<div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div> AI 선생님이 쉽게 설명하는 중...</div>` : ''}
+  ${n.aiSummary ? `<div class="ai-summary-box"><div class="ai-summary-label">🤖 AI 선생님 설명</div><div class="ai-summary-text">${n.aiSummary}</div></div>`
+    : (!state.loadingAI[n.id] ? `<button class="filter-chip" style="margin-top:8px" onclick="getAISummary('${n.id}')">🤖 AI 선생님께 쉽게 설명 부탁하기</button>` : '')}
+  <div class="news-trust">
+    <span class="trust-label">이 뉴스 믿을만해요?</span>
+    <button class="trust-btn ${n.trusted === true ? 'voted-yes' : ''}" onclick="trustVote('${n.id}', true)">✅ 믿어요</button>
+    <button class="trust-btn ${n.trusted === false ? 'voted-no' : ''}" onclick="trustVote('${n.id}', false)">❌ 의심돼요</button>
+  </div>
+</div>`).join('')}`;
+}
+
+function renderInvest() {
+  const s = state.selectedStock ? STOCKS.find(x => x.id === state.selectedStock) : null;
+  const cost = s ? s.price * state.qty : 0;
+  const searchResults = state.stockSearch.length > 0
+    ? STOCK_DB.filter(x => x.name.includes(state.stockSearch) || x.sector.includes(state.stockSearch))
+    : [];
+  return `
+<div class="card-title">💹 어떤 주식을 살까요?</div>
+
+<div style="display:flex; gap:8px; margin-bottom:12px; align-items:center;">
+  <div style="flex:1; position:relative;">
+    <input id="stockSearchInput" type="text" value="${state.stockSearch}"
+      placeholder="🔎 종목 검색 (예: 삼성, 게임, 바이오...)"
+      oninput="onStockSearch(this.value)"
+      style="width:100%; padding:10px 14px; border:1px solid #9B7FD4; border-radius:8px; font-size:14px; color:#1a1a1a; background:#fff; font-family:inherit;">
+  </div>
+  <button onclick="toggleSearchPanel()"
+    style="padding:10px 14px; background:${state.showSearchPanel ? '#764ba2' : '#f3effe'}; color:${state.showSearchPanel ? 'white' : '#764ba2'}; border:1px solid #9B7FD4; border-radius:8px; font-size:13px; cursor:pointer; white-space:nowrap;">
+    📋 전체 목록
+  </button>
+</div>
+
+${state.stockSearch && searchResults.length > 0 ? `
+<div style="border:1px solid #9B7FD4; border-radius:8px; margin-bottom:12px; overflow:hidden; background:#fff;">
+  ${searchResults.map(r => {
+    const alreadyAdded = STOCKS.find(x => x.id === r.id);
+    return `<div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid #f0edf8; cursor:pointer;" onclick="selectStock('${r.id}')">
+      <div>
+        <span style="font-size:16px; margin-right:8px;">${r.emoji}</span>
+        <strong style="font-size:14px; color:#1a1a1a;">${r.name}</strong>
+        <span style="font-size:11px; color:#999; margin-left:6px;">${r.sector}</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:13px; color:#1a1a1a;">${fmt(r.price)}원</span>
+        ${alreadyAdded
+          ? `<span style="font-size:11px; padding:2px 8px; background:#e8f5f0; color:#085041; border-radius:10px;">추가됨</span>`
+          : `<button onclick="event.stopPropagation(); addStock('${r.id}')"
+              style="font-size:11px; padding:3px 10px; background:#764ba2; color:white; border:none; border-radius:10px; cursor:pointer;">+ 추가</button>`}
+      </div>
+    </div>`;
+  }).join('')}
+</div>` : state.stockSearch && searchResults.length === 0 ? `
+<div style="text-align:center; padding:16px; color:#999; font-size:13px; margin-bottom:12px;">
+  검색 결과가 없어요. 다른 이름으로 검색해보세요.
+</div>` : ''}
+
+${state.showSearchPanel ? `
+<div style="border:1px solid #ddd; border-radius:8px; margin-bottom:12px; background:#fff; overflow:hidden;">
+  <div style="padding:10px 14px; background:#f3effe; font-size:13px; font-weight:600; color:#3C3489;">📋 전체 종목 목록 — 클릭해서 추가하세요</div>
+  ${STOCK_DB.map(r => {
+    const alreadyAdded = STOCKS.find(x => x.id === r.id);
+    return `<div style="display:flex; align-items:center; justify-content:space-between; padding:9px 14px; border-bottom:1px solid #f5f5f5;">
+      <div>
+        <span style="font-size:15px; margin-right:6px;">${r.emoji}</span>
+        <span style="font-size:13px; font-weight:600; color:#1a1a1a;">${r.name}</span>
+        <span style="font-size:11px; color:#999; margin-left:6px;">${r.sector}</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="font-size:12px; color:#444;">${fmt(r.price)}원</span>
+        ${alreadyAdded
+          ? `<button onclick="removeStock('${r.id}')" style="font-size:11px; padding:3px 8px; background:#fff0eb; color:#993C1D; border:1px solid #FF8C69; border-radius:10px; cursor:pointer;">제거</button>`
+          : `<button onclick="addStock('${r.id}')" style="font-size:11px; padding:3px 8px; background:#764ba2; color:white; border:none; border-radius:10px; cursor:pointer;">+ 추가</button>`}
+      </div>
+    </div>`;
+  }).join('')}
+</div>` : ''}
+
+<div class="card-title" style="margin-top:4px;">내 관심 종목</div>
+<div class="stock-grid">
+${STOCKS.map(s => `
+  <div class="stock-card ${state.selectedStock === s.id ? 'selected' : ''}" onclick="selectStock('${s.id}')">
+    <div style="font-size:24px">${s.emoji}</div>
+    <div class="stock-name">${s.name}</div>
+    <div class="stock-price">${fmt(s.price)}원</div>
+    <div class="stock-change ${s.change >= 0 ? 'change-up' : 'change-down'}">${fmtPct(s.change)}</div>
+  </div>`).join('')}
+</div>
+${s ? `
+<div class="invest-panel">
+  <h3>${s.emoji} ${s.name} 투자하기</h3>
+  <div style="font-size:13px; color:var(--text-secondary); margin-bottom:10px;">현재 주가: <strong>${fmt(s.price)}원</strong></div>
+  <div style="font-size:13px; color:var(--text-secondary); margin-bottom:6px;">몇 주 살까요?</div>
+  <div class="qty-control">
+    <button class="qty-btn" onclick="changeQty(-1)">−</button>
+    <span class="qty-num">${state.qty}</span>
+    <button class="qty-btn" onclick="changeQty(1)">+</button>
+    <span class="total-cost">= <span>${fmt(cost)}원</span></span>
+  </div>
+  <div style="font-size:13px; color:var(--text-secondary); margin-top:12px; margin-bottom:4px;">왜 이 주식을 사려고 하나요? (꼭 써야 해요! ✏️)</div>
+  <textarea class="reason-input" rows="2" placeholder="예) 오늘 뉴스에서 신제품 발표 소식이 있었기 때문에..." id="reasonInput">${state.reason}</textarea>
+  <button class="buy-btn" onclick="buyStock()" ${cost > state.wallet ? 'disabled' : ''}>
+    ${cost > state.wallet ? '💸 머니가 부족해요' : `🛒 ${s.name} ${state.qty}주 사기 (${fmt(cost)}원)`}
+  </button>
+</div>` : '<div style="text-align:center; padding:24px; color:var(--text-secondary); font-size:14px;">위에서 주식을 선택해보세요 👆</div>'}`;
+}
+
+function renderPortfolio() {
+  const total = state.portfolio.reduce((sum, p) => sum + p.currentPrice * p.qty, 0);
+  const invested = state.portfolio.reduce((sum, p) => sum + p.avgPrice * p.qty, 0);
+  const profit = total - invested;
+  const pct = invested > 0 ? (profit / invested * 100) : 0;
+  return `
+<div class="stats-row">
+  <div class="stat-box"><div class="stat-label">보유 주식 가치</div><div class="stat-value">${fmt(total)}원</div></div>
+  <div class="stat-box"><div class="stat-label">수익/손실</div><div class="stat-value ${profit >= 0 ? 'profit' : 'loss'}">${profit >= 0 ? '+' : ''}${fmt(profit)}원</div></div>
+  <div class="stat-box"><div class="stat-label">수익률</div><div class="stat-value ${pct >= 0 ? 'profit' : 'loss'}">${fmtPct(pct)}</div></div>
+</div>
+<div class="card">
+  <div class="card-title">🗂️ 내가 가진 주식</div>
+  ${state.portfolio.length === 0
+    ? '<div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:14px;">아직 산 주식이 없어요. 투자하기 탭에서 시작해봐요! 🚀</div>'
+    : state.portfolio.map(p => {
+        const diff = p.currentPrice - p.avgPrice;
+        const dpct = diff / p.avgPrice * 100;
+        return `<div class="portfolio-item">
+          <div><div class="port-name">${STOCKS.find(s=>s.id===p.stockId)?.emoji} ${p.name}</div><div class="port-detail">${p.qty}주 · 평균 ${fmt(p.avgPrice)}원</div></div>
+          <div style="text-align:right"><div class="port-value">${fmt(p.currentPrice * p.qty)}원</div><div class="port-pct ${dpct >= 0 ? 'profit' : 'loss'}">${fmtPct(dpct)}</div></div>
+        </div>`;
+      }).join('')}
+</div>
+<div class="section-tip">⏰ 목~금은 주가 변동을 관찰하는 시간이에요. 다음 주 월요일에 최종 결과를 확인해요!</div>`;
+}
+
+function renderTimeMachine() {
+  const ev = state.selectedPast !== null ? PAST_EVENTS[state.selectedPast] : null;
+  return `
+<div class="card-title">⏰ 타임머신 연습 모드</div>
+<div style="font-size:13px; color:var(--text-secondary); margin-bottom:12px; line-height:1.5;">과거로 돌아가서 실제 있었던 뉴스로 투자를 연습해봐요! 결과를 바로 확인할 수 있어요.</div>
+<div class="timemachine-selector">
+  ${PAST_EVENTS.map((ev, i) => `<button class="time-btn ${state.selectedPast === i ? 'active' : ''}" onclick="selectPastEvent(${i})">${ev.period}</button>`).join('')}
+</div>
+${ev ? `
+<div class="card">
+  <div class="card-title">📰 ${ev.period} 뉴스</div>
+  <div class="news-item">
+    <div class="news-headline">${ev.label}</div>
+    <div class="news-meta">
+      <span class="news-company">${ev.company}</span>
+      <a href="${ev.url}" target="_blank" class="news-link">참고 기사 ↗</a>
+    </div>
+    <div class="news-summary">${ev.news}</div>
+  </div>
+  <div style="font-size:13px; color:var(--text-secondary); margin: 8px 0;">매수 가격: <strong>${fmt(ev.buyPrice)}원</strong></div>
+  ${!state.pastBought
+    ? `<button class="buy-btn" onclick="pastBuy()">📅 ${ev.period}으로 이동해서 ${ev.company} 1주 사기!</button>`
+    : state.pastResult ? ''
+    : `<div style="text-align:center; padding:16px; background:var(--sky-light); border-radius:8px; margin-bottom:8px; font-size:14px; color:#185FA5;">${ev.company} 1주를 ${fmt(ev.buyPrice)}원에 샀어요!</div>
+       <button class="buy-btn" style="background:#0F6E56" onclick="pastReveal()">⏭️ 미래로 이동해서 결과 확인!</button>`}
+  ${state.pastResult ? `
+    <div class="result-reveal ${state.pastResult.profit < 0 ? 'result-loss' : ''}">
+      <div class="result-title">${state.pastResult.profit >= 0 ? '🎉 수익이 났어요!' : '😅 손실이 났어요'}</div>
+      <div class="result-num">${state.pastResult.profit >= 0 ? '+' : ''}${fmt(state.pastResult.profit)}원</div>
+      <div class="result-sub">수익률 ${state.pastResult.profit >= 0 ? '+' : ''}${state.pastResult.pct}% · ${fmt(ev.buyPrice)}원 → ${fmt(ev.resultPrice)}원</div>
+    </div>
+    <div style="font-size:13px; color:var(--text-secondary); text-align:center; line-height:1.6">
+      ${state.pastResult.profit >= 0 ? '📈 뉴스를 잘 분석했어요!' : '💡 투자는 항상 위험도 있어요!'}
+    </div>` : ''}
+</div>` : '<div style="text-align:center; padding:24px; color:var(--text-secondary); font-size:14px;">위에서 연습할 시기를 선택해보세요 👆</div>'}`;
+}
+
+function renderDiary() {
+  return `
+<div class="card-title">📓 나의 투자 일지</div>
+${state.diary.length === 0
+  ? `<div style="text-align:center; padding:32px; color:var(--text-secondary)"><div style="font-size:32px;margin-bottom:8px">📓</div><div style="font-size:14px">아직 투자 기록이 없어요.<br>주식을 사면 자동으로 기록돼요!</div></div>`
+  : state.diary.map(d => `
+    <div class="diary-item">
+      <div class="diary-date">${d.date}</div>
+      <div class="diary-text">${d.text.replace(/\n/g, '<br>')}</div>
+      <span class="diary-tag">${d.tag}</span>
+    </div>`).join('')}`;
+}
+
+function render() {
+  document.getElementById('wallet').textContent = fmt(state.wallet);
+  const c = document.getElementById('content');
+  let html = '';
+  if (state.tab === 'news') html = renderNews();
+  else if (state.tab === 'invest') html = renderInvest();
+  else if (state.tab === 'portfolio') html = renderPortfolio();
+  else if (state.tab === 'timemachine') html = renderTimeMachine();
+  else if (state.tab === 'diary') html = renderDiary();
+  c.innerHTML = html;
+  if (state.showKeyModal) {
+    document.getElementById('app').insertAdjacentHTML('beforeend', renderKeyModal());
+  }
+  const ri = document.getElementById('reasonInput');
+  if (ri) ri.addEventListener('input', e => { state.reason = e.target.value; });
+}
+
+window.showTab = showTab;
+window.onStockSearch = (v) => { state.stockSearch = v; render(); };
+window.toggleSearchPanel = () => { state.showSearchPanel = !state.showSearchPanel; render(); };
+window.addStock = (id) => {
+  const s = STOCK_DB.find(x => x.id === id);
+  if (s && !STOCKS.find(x => x.id === id)) { STOCKS.push(s); saveMyStocks(); showToast('✅ ' + s.name + ' 추가됨!'); render(); }
+};
+window.removeStock = (id) => {
+  STOCKS = STOCKS.filter(x => x.id !== id);
+  if (state.selectedStock === id) state.selectedStock = null;
+  saveMyStocks(); showToast('🗑️ 종목 제거됨'); render();
+};
+window.setFilter = (c) => { state.filterCompany = c; render(); };
+window.selectStock = (id) => { state.selectedStock = id === state.selectedStock ? null : id; render(); };
+window.changeQty = (d) => { state.qty = Math.max(1, Math.min(10, state.qty + d)); render(); };
+window.buyStock = buyStock;
+window.getAISummary = getAISummary;
+window.trustVote = trustVote;
+window.selectPastEvent = selectPastEvent;
+window.pastBuy = pastBuy;
+window.pastReveal = pastReveal;
+window.saveKey = saveKey;
+window.skipKey = skipKey;
+
+render();
+</script>
+</body>
+</html>
