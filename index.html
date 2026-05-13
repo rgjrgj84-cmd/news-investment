@@ -87,6 +87,7 @@
   .signal-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
   .signal-up { background: var(--mint-light); color: #085041; }
   .signal-down { background: var(--peach-light); color: #993C1D; }
+  .signal-neutral { background: var(--lemon-light); color: #854F0B; }
 
   .stock-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
   .stock-card {
@@ -262,12 +263,31 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const STOCKS = [
-  { id: 'samsung', name: '삼성전자', price: 73400, change: +1.2, emoji: '📱' },
-  { id: 'kakao',   name: '카카오',   price: 42800, change: -0.8, emoji: '💬' },
-  { id: 'naver',   name: '네이버',   price: 186500, change: +2.1, emoji: '🔍' },
-  { id: 'hyundai', name: '현대차',   price: 215000, change: -1.5, emoji: '🚗' },
+const STOCK_DB = [
+  { id: 'samsung',     name: '삼성전자',         price: 73400,  change: +1.2, emoji: '📱', sector: '반도체/IT' },
+  { id: 'kakao',       name: '카카오',           price: 42800,  change: -0.8, emoji: '💬', sector: 'IT/플랫폼' },
+  { id: 'naver',       name: '네이버',           price: 186500, change: +2.1, emoji: '🔍', sector: 'IT/플랫폼' },
+  { id: 'hyundai',     name: '현대차',           price: 215000, change: -1.5, emoji: '🚗', sector: '자동차' },
+  { id: 'lg',          name: 'LG전자',           price: 98500,  change: +0.5, emoji: '📺', sector: '전자' },
+  { id: 'sk',          name: 'SK하이닉스',       price: 198000, change: +3.1, emoji: '💾', sector: '반도체' },
+  { id: 'posco',       name: 'POSCO홀딩스',      price: 312000, change: -0.4, emoji: '🏭', sector: '철강' },
+  { id: 'celltrion',   name: '셀트리온',         price: 178500, change: +1.8, emoji: '💊', sector: '바이오' },
+  { id: 'lotte',       name: '롯데쇼핑',         price: 68200,  change: -1.1, emoji: '🛍️', sector: '유통' },
+  { id: 'coupang',     name: '쿠팡',             price: 24800,  change: +2.4, emoji: '📦', sector: '이커머스' },
+  { id: 'krafton',     name: '크래프톤',         price: 312000, change: +0.9, emoji: '🎮', sector: '게임' },
+  { id: 'netmarble',   name: '넷마블',           price: 52300,  change: -0.6, emoji: '🕹️', sector: '게임' },
+  { id: 'hana',        name: '하나금융',         price: 68900,  change: +0.3, emoji: '🏦', sector: '금융' },
+  { id: 'kb',          name: 'KB금융',           price: 91200,  change: +0.7, emoji: '🏦', sector: '금융' },
+  { id: 'amorepacific',name: '아모레퍼시픽',     price: 94500,  change: +1.5, emoji: '💄', sector: '화장품' },
+  { id: 'lg_chem',     name: 'LG화학',           price: 298000, change: -2.1, emoji: '🔬', sector: '화학' },
+  { id: 'hanwha',      name: '한화에어로스페이스',price: 385000, change: +4.2, emoji: '🚀', sector: '방산/우주' },
+  { id: 'kakaogames',  name: '카카오게임즈',     price: 18900,  change: -1.3, emoji: '🎯', sector: '게임' },
 ];
+
+let STOCKS = JSON.parse(localStorage.getItem('my_stocks') || 'null') ||
+  STOCK_DB.filter(s => ['samsung','kakao','naver','hyundai'].includes(s.id));
+
+function saveMyStocks() { localStorage.setItem('my_stocks', JSON.stringify(STOCKS)); }
 
 const PAST_EVENTS = [
   { period: '2024년 1월', label: '삼성 갤럭시 S24 시리즈 발표', news: '삼성전자가 새로운 갤럭시 S24 시리즈를 공개했습니다. AI 기능이 탑재된 최신 스마트폰으로 전세계 관심이 집중됐어요!', company: '삼성전자', stockId: 'samsung', buyPrice: 68000, resultPrice: 75400, signal: 'up', url: 'https://news.naver.com' },
@@ -276,12 +296,93 @@ const PAST_EVENTS = [
   { period: '2024년 9월', label: '네이버 동남아 시장 진출 발표', news: '네이버가 일본과 동남아시아 시장에서 새로운 서비스를 시작한다고 발표했습니다. 글로벌 기업으로 성장하고 있어요!', company: '네이버', stockId: 'naver', buyPrice: 178000, resultPrice: 195000, signal: 'up', url: 'https://news.naver.com' },
 ];
 
-const SAMPLE_NEWS = [
-  { id: 'n1', headline: '삼성전자, 차세대 AI 반도체 양산 성공... 글로벌 시장 선점 기대', company: '삼성전자', stockId: 'samsung', date: '2025.04.03', signal: 'up',   url: 'https://news.naver.com', aiSummary: null, trusted: null },
-  { id: 'n2', headline: '카카오, 카카오페이 수수료 인하 발표... 경쟁 심화로 수익성 우려', company: '카카오',   stockId: 'kakao',   date: '2025.04.03', signal: 'down', url: 'https://news.naver.com', aiSummary: null, trusted: null },
-  { id: 'n3', headline: '현대차, 북미 전기차 시장 점유율 2위 등극... 아이오닉9 예약 폭주', company: '현대차',   stockId: 'hyundai', date: '2025.04.03', signal: 'up',   url: 'https://news.naver.com', aiSummary: null, trusted: null },
-  { id: 'n4', headline: '네이버, 라인야후 지분 매각 협상 결렬... 향후 전략 불확실',        company: '네이버',   stockId: 'naver',   date: '2025.04.02', signal: 'down', url: 'https://news.naver.com', aiSummary: null, trusted: null },
+// 실시간 뉴스 데이터 (RSS에서 불러옴)
+let LIVE_NEWS = [];
+
+// 종목별 키워드 매핑
+const STOCK_KEYWORDS = {
+  samsung:      { name: '삼성전자', keywords: ['삼성전자','삼성'] },
+  kakao:        { name: '카카오',   keywords: ['카카오'] },
+  naver:        { name: '네이버',   keywords: ['네이버','NAVER'] },
+  hyundai:      { name: '현대차',   keywords: ['현대차','현대자동차'] },
+  lg:           { name: 'LG전자',   keywords: ['LG전자','엘지전자'] },
+  sk:           { name: 'SK하이닉스', keywords: ['SK하이닉스','하이닉스'] },
+  posco:        { name: 'POSCO',    keywords: ['포스코','POSCO'] },
+  celltrion:    { name: '셀트리온', keywords: ['셀트리온'] },
+  lotte:        { name: '롯데',     keywords: ['롯데쇼핑','롯데'] },
+  coupang:      { name: '쿠팡',     keywords: ['쿠팡'] },
+  krafton:      { name: '크래프톤', keywords: ['크래프톤','배틀그라운드'] },
+  netmarble:    { name: '넷마블',   keywords: ['넷마블'] },
+  hana:         { name: '하나금융', keywords: ['하나금융','하나은행'] },
+  kb:           { name: 'KB금융',   keywords: ['KB금융','국민은행'] },
+  amorepacific: { name: '아모레퍼시픽', keywords: ['아모레퍼시픽','아모레'] },
+  lg_chem:      { name: 'LG화학',   keywords: ['LG화학'] },
+  hanwha:       { name: '한화에어로', keywords: ['한화에어로스페이스','한화에어로'] },
+  kakaogames:   { name: '카카오게임즈', keywords: ['카카오게임즈'] },
+};
+
+// 뉴스 헤드라인에서 관련 종목 찾기
+function detectCompany(title) {
+  for (const [id, info] of Object.entries(STOCK_KEYWORDS)) {
+    if (info.keywords.some(kw => title.includes(kw))) {
+      return { stockId: id, company: info.name };
+    }
+  }
+  return { stockId: null, company: '경제일반' };
+}
+
+// 간단 호악재 판단 (키워드 기반)
+const UP_WORDS   = ['상승','급등','호재','신고가','성장','돌파','계약','수출','흑자','증가','매출','선정','수상','출시','흥행','개선','강세'];
+const DOWN_WORDS = ['하락','급락','악재','손실','적자','감소','위기','우려','논란','하향','침체','부진','파산','소송','제재','약세'];
+function detectSignal(title) {
+  if (UP_WORDS.some(w => title.includes(w)))   return 'up';
+  if (DOWN_WORDS.some(w => title.includes(w))) return 'down';
+  return 'neutral';
+}
+
+// RSS → JSON 프록시로 뉴스 가져오기
+const RSS_FEEDS = [
+  { url: 'https://news.google.com/rss/search?q=주식+경제+기업&hl=ko&gl=KR&ceid=KR:ko', label: '구글뉴스-주식' },
+  { url: 'https://news.google.com/rss/search?q=삼성전자+네이버+카카오+현대차&hl=ko&gl=KR&ceid=KR:ko', label: '구글뉴스-종목' },
 ];
+const PROXY = 'https://api.rss2json.com/v1/api.json?rss_url=';
+
+async function fetchLiveNews() {
+  state.newsLoading = true;
+  render();
+  let items = [];
+  for (const feed of RSS_FEEDS) {
+    try {
+      const res = await fetch(PROXY + encodeURIComponent(feed.url));
+      const data = await res.json();
+      if (data.status === 'ok' && data.items) items.push(...data.items);
+    } catch(e) { console.warn('RSS fetch error', e); }
+  }
+  // 중복 제거 + 파싱
+  const seen = new Set();
+  LIVE_NEWS = [];
+  for (const item of items) {
+    const title = item.title ? item.title.replace(/<[^>]+>/g, '').trim() : '';
+    if (!title || seen.has(title)) continue;
+    seen.add(title);
+    const { stockId, company } = detectCompany(title);
+    const pubDate = item.pubDate ? new Date(item.pubDate).toLocaleDateString('ko-KR') : '';
+    LIVE_NEWS.push({
+      id: 'live_' + Math.random().toString(36).slice(2),
+      headline: title,
+      company, stockId,
+      date: pubDate,
+      signal: detectSignal(title),
+      url: item.link || item.url || '#',
+      aiSummary: null, trusted: null,
+    });
+  }
+  // 최신 30개만
+  LIVE_NEWS = LIVE_NEWS.slice(0, 30);
+  state.newsLoading = false;
+  state.newsLastFetched = new Date().toLocaleTimeString('ko-KR');
+  render();
+}
 
 let apiKey = localStorage.getItem('anthropic_key') || '';
 let state = {
@@ -289,6 +390,8 @@ let state = {
   selectedStock: null, qty: 1, reason: '',
   selectedPast: null, pastBought: false, pastResult: null,
   filterCompany: 'all', loadingAI: {}, showKeyModal: !apiKey,
+  stockSearch: '', showSearchPanel: false,
+  newsLoading: false, newsLastFetched: null,
 };
 
 function fmt(n) { return Math.round(n).toLocaleString('ko-KR'); }
@@ -315,16 +418,18 @@ function saveKey() {
   apiKey = k;
   localStorage.setItem('anthropic_key', k);
   state.showKeyModal = false;
-  render();
+  const m = document.getElementById('keyModal');
+  if (m) m.remove();
 }
 
 function skipKey() {
   state.showKeyModal = false;
-  render();
+  const m = document.getElementById('keyModal');
+  if (m) m.remove();
 }
 
 async function getAISummary(newsId) {
-  const news = SAMPLE_NEWS.find(n => n.id === newsId);
+  const news = LIVE_NEWS.find(n => n.id === newsId);
   if (!news || news.aiSummary || state.loadingAI[newsId]) return;
   if (!apiKey) { showToast('⚙️ AI 기능을 쓰려면 API 키를 설정해주세요'); state.showKeyModal = true; render(); return; }
   state.loadingAI[newsId] = true;
@@ -348,7 +453,7 @@ async function getAISummary(newsId) {
 }
 
 function trustVote(newsId, vote) {
-  const news = SAMPLE_NEWS.find(n => n.id === newsId);
+  const news = LIVE_NEWS.find(n => n.id === newsId);
   if (news) { news.trusted = vote; render(); }
 }
 
@@ -397,23 +502,41 @@ function pastReveal() {
 }
 
 function renderKeyModal() {
-  return `<div class="modal-overlay">
-    <div class="modal-box">
-      <div class="modal-title">🤖 AI 선생님 설정</div>
-      <div class="modal-desc">
+  return `<div id="keyModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#fff;border-radius:12px;padding:24px;width:100%;max-width:400px;">
+      <div style="font-size:16px;font-weight:700;margin-bottom:8px;color:#1a1a1a;">🤖 AI 선생님 설정</div>
+      <div style="font-size:13px;color:#666;line-height:1.6;margin-bottom:16px;">
         뉴스를 초등학생 눈높이로 쉽게 설명해주는 AI 기능을 사용하려면 Anthropic API 키가 필요해요.<br><br>
         <strong>API 키 발급:</strong> <a href="https://console.anthropic.com" target="_blank" style="color:#764ba2">console.anthropic.com</a> → API Keys
       </div>
-      <input class="modal-input" id="keyInput" type="password" placeholder="sk-ant-..." value="${apiKey}">
-      <button class="modal-btn" onclick="saveKey()">✅ 저장하고 시작하기</button>
-      <button class="modal-skip" onclick="skipKey()">나중에 설정할게요 (AI 기능 없이 사용)</button>
+      <input id="keyInput" type="password" placeholder="sk-ant-..." value="${apiKey}"
+        style="width:100%;border:1px solid #ddd;border-radius:8px;padding:10px 12px;font-size:14px;color:#1a1a1a;background:#f7f7f5;font-family:inherit;display:block;margin-bottom:10px;">
+      <button onclick="saveKey()"
+        style="width:100%;padding:12px;background:#764ba2;color:white;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;display:block;margin-bottom:8px;">
+        ✅ 저장하고 시작하기
+      </button>
+      <button onclick="skipKey()"
+        style="width:100%;padding:10px;background:none;color:#666;border:1px solid #ddd;border-radius:8px;font-size:13px;cursor:pointer;display:block;">
+        나중에 설정할게요 (AI 기능 없이 사용)
+      </button>
     </div>
   </div>`;
 }
 
 function renderNews() {
-  const companies = ['all', '삼성전자', '카카오', '현대차', '네이버'];
-  const filtered = state.filterCompany === 'all' ? SAMPLE_NEWS : SAMPLE_NEWS.filter(n => n.company === state.filterCompany);
+  // 관심 종목 이름 목록
+  const myCompanies = STOCKS.map(s => STOCK_KEYWORDS[s.id]?.name || s.name);
+  const filterOptions = ['all', ...myCompanies];
+
+  // 필터링: 관심 종목 관련 뉴스 우선, 나머지는 경제 일반
+  let filtered = LIVE_NEWS;
+  if (state.filterCompany !== 'all') {
+    filtered = LIVE_NEWS.filter(n => n.company === state.filterCompany);
+  }
+
+  const signalLabel = s => s === 'up' ? '📈 호재' : s === 'down' ? '📉 악재' : '⚖️ 중립';
+  const signalClass = s => s === 'up' ? 'signal-up' : s === 'down' ? 'signal-down' : 'signal-neutral';
+
   return `
 <div class="week-schedule">
   <div class="week-day buy-period"><div class="week-day-name">월</div><div class="week-day-status">투자</div></div>
@@ -423,21 +546,45 @@ function renderNews() {
   <div class="week-day watch-period"><div class="week-day-name">금</div><div class="week-day-status">관찰</div></div>
   <div class="week-day result-period"><div class="week-day-name">다음 월</div><div class="week-day-status">결산</div></div>
 </div>
-<div class="filter-row">
-  ${companies.map(c => `<button class="filter-chip ${state.filterCompany === c ? 'active' : ''}" onclick="setFilter('${c}')">${c === 'all' ? '전체' : c}</button>`).join('')}
+
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+  <div style="font-size:12px; color:#999;">
+    ${state.newsLoading ? '⏳ 뉴스 불러오는 중...' : state.newsLastFetched ? '🕐 업데이트: ' + state.newsLastFetched : '뉴스를 불러와주세요'}
+  </div>
+  <button onclick="fetchLiveNews()" style="padding:6px 14px; background:#764ba2; color:white; border:none; border-radius:20px; font-size:12px; cursor:pointer;">
+    ${state.newsLoading ? '⏳ 로딩중...' : '🔄 뉴스 새로고침'}
+  </button>
 </div>
-<div class="card-title">📰 오늘의 경제 뉴스</div>
-${filtered.map(n => `
+
+<div class="filter-row">
+  ${filterOptions.map(c => `<button class="filter-chip ${state.filterCompany === c ? 'active' : ''}" onclick="setFilter('${c}')">${c === 'all' ? '📋 전체' : c}</button>`).join('')}
+</div>
+
+<div class="card-title">📰 실시간 경제 뉴스 ${LIVE_NEWS.length > 0 ? '(' + LIVE_NEWS.length + '건)' : ''}</div>
+
+${state.newsLoading ? `
+  <div style="text-align:center; padding:32px; color:#999;">
+    <div style="font-size:28px; margin-bottom:8px;">📡</div>
+    <div style="font-size:14px;">뉴스를 불러오는 중이에요...</div>
+  </div>
+` : filtered.length === 0 ? `
+  <div style="text-align:center; padding:32px; color:#999;">
+    <div style="font-size:28px; margin-bottom:8px;">📰</div>
+    <div style="font-size:14px; margin-bottom:12px;">${LIVE_NEWS.length === 0 ? '아직 뉴스를 불러오지 않았어요.' : '해당 종목 뉴스가 없어요.'}</div>
+    ${LIVE_NEWS.length === 0 ? '<button onclick="fetchLiveNews()" style="padding:10px 20px; background:#764ba2; color:white; border:none; border-radius:20px; font-size:14px; cursor:pointer;">📡 실시간 뉴스 불러오기</button>' : ''}
+  </div>
+` : filtered.map(n => `
 <div class="news-item">
   <div class="news-headline">${n.headline}</div>
   <div class="news-meta">
     <span class="news-company">${n.company}</span>
     <span class="news-date">${n.date}</span>
-    <span class="signal-badge ${n.signal === 'up' ? 'signal-up' : 'signal-down'}">${n.signal === 'up' ? '📈 호재' : '📉 악재'}</span>
+    <span class="signal-badge ${signalClass(n.signal)}">${signalLabel(n.signal)}</span>
     <a href="${n.url}" target="_blank" class="news-link">원문 읽기 ↗</a>
   </div>
   ${state.loadingAI[n.id] ? `<div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div> AI 선생님이 쉽게 설명하는 중...</div>` : ''}
-  ${n.aiSummary ? `<div class="ai-summary-box"><div class="ai-summary-label">🤖 AI 선생님 설명</div><div class="ai-summary-text">${n.aiSummary}</div></div>`
+  ${n.aiSummary
+    ? `<div class="ai-summary-box"><div class="ai-summary-label">🤖 AI 선생님 설명</div><div class="ai-summary-text">${n.aiSummary}</div></div>`
     : (!state.loadingAI[n.id] ? `<button class="filter-chip" style="margin-top:8px" onclick="getAISummary('${n.id}')">🤖 AI 선생님께 쉽게 설명 부탁하기</button>` : '')}
   <div class="news-trust">
     <span class="trust-label">이 뉴스 믿을만해요?</span>
@@ -450,8 +597,71 @@ ${filtered.map(n => `
 function renderInvest() {
   const s = state.selectedStock ? STOCKS.find(x => x.id === state.selectedStock) : null;
   const cost = s ? s.price * state.qty : 0;
+  const searchResults = state.stockSearch.length > 0
+    ? STOCK_DB.filter(x => x.name.includes(state.stockSearch) || x.sector.includes(state.stockSearch))
+    : [];
   return `
 <div class="card-title">💹 어떤 주식을 살까요?</div>
+
+<div style="display:flex; gap:8px; margin-bottom:12px; align-items:center;">
+  <div style="flex:1; position:relative;">
+    <input id="stockSearchInput" type="text" value="${state.stockSearch}"
+      placeholder="🔎 종목 검색 (예: 삼성, 게임, 바이오...)"
+      oninput="onStockSearch(this.value)"
+      style="width:100%; padding:10px 14px; border:1px solid #9B7FD4; border-radius:8px; font-size:14px; color:#1a1a1a; background:#fff; font-family:inherit;">
+  </div>
+  <button onclick="toggleSearchPanel()"
+    style="padding:10px 14px; background:${state.showSearchPanel ? '#764ba2' : '#f3effe'}; color:${state.showSearchPanel ? 'white' : '#764ba2'}; border:1px solid #9B7FD4; border-radius:8px; font-size:13px; cursor:pointer; white-space:nowrap;">
+    📋 전체 목록
+  </button>
+</div>
+
+${state.stockSearch && searchResults.length > 0 ? `
+<div style="border:1px solid #9B7FD4; border-radius:8px; margin-bottom:12px; overflow:hidden; background:#fff;">
+  ${searchResults.map(r => {
+    const alreadyAdded = STOCKS.find(x => x.id === r.id);
+    return `<div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid #f0edf8; cursor:pointer;" onclick="selectStock('${r.id}')">
+      <div>
+        <span style="font-size:16px; margin-right:8px;">${r.emoji}</span>
+        <strong style="font-size:14px; color:#1a1a1a;">${r.name}</strong>
+        <span style="font-size:11px; color:#999; margin-left:6px;">${r.sector}</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:13px; color:#1a1a1a;">${fmt(r.price)}원</span>
+        ${alreadyAdded
+          ? `<span style="font-size:11px; padding:2px 8px; background:#e8f5f0; color:#085041; border-radius:10px;">추가됨</span>`
+          : `<button onclick="event.stopPropagation(); addStock('${r.id}')"
+              style="font-size:11px; padding:3px 10px; background:#764ba2; color:white; border:none; border-radius:10px; cursor:pointer;">+ 추가</button>`}
+      </div>
+    </div>`;
+  }).join('')}
+</div>` : state.stockSearch && searchResults.length === 0 ? `
+<div style="text-align:center; padding:16px; color:#999; font-size:13px; margin-bottom:12px;">
+  검색 결과가 없어요. 다른 이름으로 검색해보세요.
+</div>` : ''}
+
+${state.showSearchPanel ? `
+<div style="border:1px solid #ddd; border-radius:8px; margin-bottom:12px; background:#fff; overflow:hidden;">
+  <div style="padding:10px 14px; background:#f3effe; font-size:13px; font-weight:600; color:#3C3489;">📋 전체 종목 목록 — 클릭해서 추가하세요</div>
+  ${STOCK_DB.map(r => {
+    const alreadyAdded = STOCKS.find(x => x.id === r.id);
+    return `<div style="display:flex; align-items:center; justify-content:space-between; padding:9px 14px; border-bottom:1px solid #f5f5f5;">
+      <div>
+        <span style="font-size:15px; margin-right:6px;">${r.emoji}</span>
+        <span style="font-size:13px; font-weight:600; color:#1a1a1a;">${r.name}</span>
+        <span style="font-size:11px; color:#999; margin-left:6px;">${r.sector}</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="font-size:12px; color:#444;">${fmt(r.price)}원</span>
+        ${alreadyAdded
+          ? `<button onclick="removeStock('${r.id}')" style="font-size:11px; padding:3px 8px; background:#fff0eb; color:#993C1D; border:1px solid #FF8C69; border-radius:10px; cursor:pointer;">제거</button>`
+          : `<button onclick="addStock('${r.id}')" style="font-size:11px; padding:3px 8px; background:#764ba2; color:white; border:none; border-radius:10px; cursor:pointer;">+ 추가</button>`}
+      </div>
+    </div>`;
+  }).join('')}
+</div>` : ''}
+
+<div class="card-title" style="margin-top:4px;">내 관심 종목</div>
 <div class="stock-grid">
 ${STOCKS.map(s => `
   <div class="stock-card ${state.selectedStock === s.id ? 'selected' : ''}" onclick="selectStock('${s.id}')">
@@ -575,6 +785,17 @@ function render() {
 }
 
 window.showTab = showTab;
+window.onStockSearch = (v) => { state.stockSearch = v; render(); };
+window.toggleSearchPanel = () => { state.showSearchPanel = !state.showSearchPanel; render(); };
+window.addStock = (id) => {
+  const s = STOCK_DB.find(x => x.id === id);
+  if (s && !STOCKS.find(x => x.id === id)) { STOCKS.push(s); saveMyStocks(); showToast('✅ ' + s.name + ' 추가됨!'); render(); }
+};
+window.removeStock = (id) => {
+  STOCKS = STOCKS.filter(x => x.id !== id);
+  if (state.selectedStock === id) state.selectedStock = null;
+  saveMyStocks(); showToast('🗑️ 종목 제거됨'); render();
+};
 window.setFilter = (c) => { state.filterCompany = c; render(); };
 window.selectStock = (id) => { state.selectedStock = id === state.selectedStock ? null : id; render(); };
 window.changeQty = (d) => { state.qty = Math.max(1, Math.min(10, state.qty + d)); render(); };
@@ -586,8 +807,11 @@ window.pastBuy = pastBuy;
 window.pastReveal = pastReveal;
 window.saveKey = saveKey;
 window.skipKey = skipKey;
+window.fetchLiveNews = fetchLiveNews;
 
 render();
+// 앱 시작 시 자동으로 뉴스 불러오기
+fetchLiveNews();
 </script>
 </body>
 </html>
